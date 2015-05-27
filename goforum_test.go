@@ -36,10 +36,23 @@ func TestBlankPasswordFile(t *testing.T) {
 func TestOpenPasswordFile(t *testing.T) {
 	users, err := openPasswdFile("passwd")
 	assert.NotEmpty(t, users)
-	assert.Equal(t, len(users), 1)
+	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
 
 	v, ok := users["jdelgad"]
 	assert.NotNil(t, ok)
 	assert.Equal(t, v, "pass")
+}
+
+func TestAuthenticate(t *testing.T) {
+	users, err := openPasswdFile("passwd")
+	if err != nil {
+		assert.True(t, false)
+	}
+
+	for user,pass := range users {
+		assert.True(t, Authenticate(user, pass, users))
+	}
+
+	assert.False(t, Authenticate("foo", "bar", users))
 }

@@ -44,9 +44,7 @@ func openPasswdFile(file string) (map[string]string, error) {
 
 	var userPass = make(map[string]string)
 
-	// sanity check, display to standard output
 	for _, each := range rawCSVdata {
-		fmt.Println(each)
 		userPass[each[0]] = each[1]
 	}
 
@@ -70,6 +68,14 @@ func validatePassword(b []byte, up string) bool {
 	return false
 }
 
+func Authenticate(name, pass string, users map[string]string) bool {
+	_, ok := users[name]
+	if !ok {
+		return false
+	}
+
+	return users[name] == pass
+}
 
 
 func main() {
