@@ -5,7 +5,18 @@ import (
 	"fmt"
 )
 
-func validatePassword(b []byte, up string) (good bool) {
+func validateUsername(n string, uns []string) bool {
+	found := false
+	for i := range uns {
+		if n == uns[i] {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
+func validatePassword(b []byte, up string) bool {
 	if string(b) == up {
 		return true
 	}

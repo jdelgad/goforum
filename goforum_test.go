@@ -6,11 +6,17 @@ import (
 )
 
 func TestPasswordFailure(t *testing.T) {
-	assert := assert.New(t)
-	assert.False(validatePassword([]byte("testing"), "pow"))
+	assert.False(t, validatePassword([]byte("testing"), "pow"))
 }
 
 func TestPasswordSuccess(t *testing.T) {
-	assert := assert.New(t)
-	assert.True(validatePassword([]byte("testing"), "testing"))
+	assert.True(t, validatePassword([]byte("testing"), "testing"))
+}
+
+func TestUsernameFailure(t *testing.T) {
+	assert.False(t, validateUsername("jdelgad", []string{"bad"}))
+}
+
+func TestUsernameSuccess(t *testing.T) {
+	assert.True(t, validateUsername("jdelgad", []string{"jdelgad"}))
 }
