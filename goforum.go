@@ -3,17 +3,31 @@ package main
 import (
 	"golang.org/x/crypto/ssh/terminal"
 	"fmt"
+	"os"
 )
 
+// exists returns whether the given file or directory exists or not
+func exists(path string) bool {
+	_, err := os.Stat(path)
+
+	if err == nil {
+		return true
+	}
+
+	return false
+}
+
+func openPasswd(file string) error {
+	return nil
+}
+
 func validateUsername(n string, uns []string) bool {
-	found := false
 	for i := range uns {
 		if n == uns[i] {
-			found = true
-			break
+			return true
 		}
 	}
-	return found
+	return false
 }
 
 func validatePassword(b []byte, up string) bool {
@@ -24,18 +38,19 @@ func validatePassword(b []byte, up string) bool {
 	return false
 }
 
+
+
 func main() {
-	up := "test"
-	pass, err := terminal.ReadPassword(0)
+	var u string
+	fmt.Print("Username: ")
+	fmt.Scanf("%s", &u)
+
+	fmt.Print("Enter password: ")
+	_, err := terminal.ReadPassword(0)
+	fmt.Println()
 
 	if err != nil {
 		panic("Could not obtain password")
 	}
 
-	good := validatePassword(pass, up)
-	if good {
-		fmt.Println("Success")
-	} else {
-		fmt.Println("Failure")
-	}
 }

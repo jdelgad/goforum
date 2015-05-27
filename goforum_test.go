@@ -20,3 +20,14 @@ func TestUsernameFailure(t *testing.T) {
 func TestUsernameSuccess(t *testing.T) {
 	assert.True(t, validateUsername("jdelgad", []string{"jdelgad"}))
 }
+
+func TestPasswordFileExists(t *testing.T) {
+	b := exists("passwd")
+	assert.True(t, b)
+}
+
+func TestPasswordFileDoesNotExist(t *testing.T) {
+	b := exists("fakePasswd")
+	assert.False(t, b)
+}
+
