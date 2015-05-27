@@ -21,24 +21,25 @@ func TestUsernameSuccess(t *testing.T) {
 	assert.True(t, validateUsername("jdelgad", []string{"jdelgad"}))
 }
 
-func TestPasswordFileExists(t *testing.T) {
-	b := exists("passwd")
-	assert.True(t, b)
+func TestPasswordFileDoesNotExist(t *testing.T) {
+	users, err := openPasswdFile("fakePasswd")
+	assert.Nil(t, users)
+	assert.Error(t, err)
 }
 
-func TestPasswordFileDoesNotExist(t *testing.T) {
-	b := exists("fakePasswd")
-	assert.False(t, b)
+func TestBlankPasswordFile(t *testing.T) {
+	users, err := openPasswdFile("blankPasswd")
+	assert.Empty(t, users)
+	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := openPasswd("passwd")
+	users, err := openPasswdFile("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 1)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	v, ok := users["jdelgad"]
 	assert.NotNil(t, ok)
 	assert.Equal(t, v, "pass")
-
 }

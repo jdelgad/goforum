@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"encoding/csv"
-	"log"
 	"errors"
 )
 
@@ -20,14 +19,12 @@ func exists(path string) bool {
 	return false
 }
 
-func openPasswd(file string) (map[string]string, error) {
-	passwd := "passwd"
-	if !exists(passwd) {
-		log.Fatal("password file does not exist")
+func openPasswdFile(file string) (map[string]string, error) {
+	if !exists(file) {
 		return nil, errors.New("password file does not exist")
 	}
 
-	csvfile, err := os.Open("passwd")
+	csvfile, err := os.Open(file)
 
 	if err != nil {
 		return nil, errors.New("could not open password file")
