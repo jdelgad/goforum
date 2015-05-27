@@ -31,3 +31,14 @@ func TestPasswordFileDoesNotExist(t *testing.T) {
 	assert.False(t, b)
 }
 
+func TestOpenPasswordFile(t *testing.T) {
+	users, err := openPasswd("passwd")
+	assert.NotEmpty(t, users)
+	assert.Equal(t, len(users), 1)
+	assert.Nil(t, err)
+
+	v, ok := users["jdelgad"]
+	assert.NotNil(t, ok)
+	assert.Equal(t, v, "pass")
+
+}
