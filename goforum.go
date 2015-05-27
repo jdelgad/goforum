@@ -5,6 +5,14 @@ import (
 	"fmt"
 )
 
+func validatePassword(b []byte, up string) (good bool) {
+	if string(b) == up {
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	up := "test"
 	pass, err := terminal.ReadPassword(0)
@@ -13,8 +21,9 @@ func main() {
 		panic("Could not obtain password")
 	}
 
-	if string(pass) == up {
-		fmt.Println("Success!")
+	good := validatePassword(pass, up)
+	if good {
+		fmt.Println("Success")
 	} else {
 		fmt.Println("Failure")
 	}
