@@ -64,7 +64,7 @@ func TestAuthenticate(t *testing.T) {
 func TestRegularUser(t *testing.T) {
 	users, err := openPasswordFile("passwd")
 
-	if err!= nil {
+	if err != nil {
 		assert.True(t, false)
 	}
 
@@ -84,7 +84,7 @@ func TestRegularUser(t *testing.T) {
 func TestAdminUser(t *testing.T) {
 	users, err := openPasswordFile("passwd")
 
-	if err!= nil {
+	if err != nil {
 		assert.True(t, false)
 	}
 
@@ -125,4 +125,3 @@ func TestIsLoggedIn(t *testing.T) {
 	assert.False(t, v)
 	assert.Nil(t, err)
 }
-

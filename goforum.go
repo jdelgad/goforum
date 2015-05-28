@@ -10,12 +10,12 @@ import (
 
 type User struct {
 	username string
-	role string
+	role     string
 	password string
 }
 
 type Session struct {
-	user User
+	user   User
 	active bool
 }
 
@@ -70,13 +70,10 @@ func openPasswordFile(file string) (map[string]User, error) {
 	return userPass, nil
 }
 
-func validateUsername(n string, uns []string) bool {
-	for i := range uns {
-		if n == uns[i] {
-			return true
-		}
-	}
-	return false
+func validateUsername(n string, users map[string]User) bool {
+	_, ok := users[n]
+
+	return ok
 }
 
 func validatePassword(b []byte, up string) bool {
@@ -132,21 +129,41 @@ func promptUser() int32 {
 	return c
 }
 
-func isLoggedIn(name string, session Session) (bool) {
+func isLoggedIn(name string, session Session) bool {
 	return session.user.username == name && session.active
 }
 
 func main() {
-	var u string
-	fmt.Print("Username: ")
-	fmt.Scanf("%s", &u)
-
-	fmt.Print("Enter password: ")
-	_, err := terminal.ReadPassword(0)
-	fmt.Println()
+	users, err := openPasswordFile("passwd")
 
 	if err != nil {
-		panic("Could not obtain password")
+		panic("Could not open password file")
+	}
+
+	validUsername := false
+	validPassword := false
+	for !validUsername || !validPassword {
+		var u string
+		fmt.Print("Username: ")
+		fmt.Scanf("%s", &u)
+
+		fmt.Print("Enter password: ")
+		pass, err := terminal.ReadPassword(0)
+		fmt.Println()
+
+		if err != nil {
+			panic("Could not obtain password")
+		}
+
+		validUsername = validateUsername(u, users)
+
+		user, ok := users[u]
+
+		if !ok {
+			validPassword = false
+		} else {
+			validPassword = validatePassword([]byte(pass), user.password)
+		}
 	}
 
 	sel := promptUser()
