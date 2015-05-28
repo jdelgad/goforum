@@ -14,11 +14,17 @@ func TestPasswordSuccess(t *testing.T) {
 }
 
 func TestUsernameFailure(t *testing.T) {
-	assert.False(t, validateUsername("jdelgad", []string{"bad"}))
+	user := User{username: "bad"}
+	users := make(map[string]User, 1)
+	users["bad"] = user
+	assert.False(t, validateUsername("jdelgad", users))
 }
 
 func TestUsernameSuccess(t *testing.T) {
-	assert.True(t, validateUsername("jdelgad", []string{"jdelgad"}))
+	user := User{username: "jdelgad"}
+	users := make(map[string]User, 1)
+	users["jdelgad"] = user
+	assert.True(t, validateUsername("jdelgad", users))
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
