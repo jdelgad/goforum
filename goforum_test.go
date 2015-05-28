@@ -1,8 +1,8 @@
 package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestPasswordFailure(t *testing.T) {
@@ -22,37 +22,75 @@ func TestUsernameSuccess(t *testing.T) {
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
-	users, err := openPasswdFile("fakePasswd")
+	users, err := openPasswordFile("fakePasswd")
 	assert.Nil(t, users)
 	assert.Error(t, err)
 }
 
 func TestBlankPasswordFile(t *testing.T) {
-	users, err := openPasswdFile("blankPasswd")
+	users, err := openPasswordFile("blankPasswd")
 	assert.Empty(t, users)
 	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := openPasswdFile("passwd")
+	users, err := openPasswordFile("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
 
 	v, ok := users["jdelgad"]
 	assert.NotNil(t, ok)
-	assert.Equal(t, v, "pass")
+	assert.Equal(t, v.username, "jdelgad")
+	assert.Equal(t, v.password, "pass")
+	assert.Equal(t, v.role, "Admin")
 }
 
 func TestAuthenticate(t *testing.T) {
-	users, err := openPasswdFile("passwd")
+	users, err := openPasswordFile("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	for user,pass := range users {
-		assert.True(t, Authenticate(user, pass, users))
+	for name, user := range users {
+		assert.True(t, Authenticate(name, user.password, users))
 	}
 
 	assert.False(t, Authenticate("foo", "bar", users))
+}
+
+func TestRegularUser(t *testing.T) {
+	users, err := openPasswordFile("passwd")
+
+	if err!= nil {
+		assert.True(t, false)
+	}
+
+	v, err := isRegularUser("jdelgad", users)
+	assert.False(t, v)
+	assert.Nil(t, err)
+
+	v, err = isRegularUser("newUser", users)
+	assert.True(t, v)
+	assert.Nil(t, err)
+
+	v, err = isRegularUser("noSuchUser", users)
+	assert.False(t, v)
+	assert.NotNil(t, err)
+}
+
+func TestAdminUser(t *testing.T) {
+	users, err := openPasswordFile("passwd")
+
+	if err!= nil {
+		assert.True(t, false)
+	}
+
+	v, err := isAdminUser("jdelgad", users)
+	assert.True(t, v)
+	assert.Nil(t, err)
+
+	v, err = isAdminUser("newUser", users)
+	assert.False(t, v)
+	assert.Nil(t, err)
 }
