@@ -53,10 +53,12 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	for name, user := range users {
-		assert.True(t, Authenticate(name, user.password, users))
+		_, ok := Authenticate(name, user.password, users)
+		assert.Nil(t, ok)
 	}
 
-	assert.False(t, Authenticate("foo", "bar", users))
+	_, ok := Authenticate("foo", "bar", users)
+	assert.NotNil(t, ok)
 }
 
 func TestRegularUser(t *testing.T) {
@@ -94,3 +96,33 @@ func TestAdminUser(t *testing.T) {
 	assert.False(t, v)
 	assert.Nil(t, err)
 }
+
+func ExamplePromptUser() {
+	promptUser()
+	// Output:
+	// Menu
+	// ===========
+	// 1. Logout
+}
+
+func TestIsLoggedIn(t *testing.T) {
+	users, err := openPasswordFile("passwd")
+	if err != nil {
+		assert.True(t, false)
+	}
+
+	session, err := Authenticate("jdelgad", "pass", users)
+	v := isLoggedIn("jdelgad", session)
+	assert.True(t, v)
+	assert.Nil(t, err)
+
+	session, err = Authenticate("newUser", "pass2", users)
+	v = isLoggedIn("newUser", session)
+	assert.True(t, v)
+	assert.Nil(t, err)
+
+	v = isLoggedIn("jdelgad", session)
+	assert.False(t, v)
+	assert.Nil(t, err)
+}
+

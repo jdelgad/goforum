@@ -14,6 +14,11 @@ type User struct {
 	password string
 }
 
+type Session struct {
+	user User
+	active bool
+}
+
 // exists returns whether the given file or directory exists or not
 func exists(path string) bool {
 	_, err := os.Stat(path)
@@ -82,13 +87,20 @@ func validatePassword(b []byte, up string) bool {
 	return false
 }
 
-func Authenticate(name, pass string, users map[string]User) bool {
-	_, ok := users[name]
+func Authenticate(name, pass string, users map[string]User) (Session, error) {
+	user, ok := users[name]
 	if !ok {
-		return false
+		return Session{}, errors.New("user does not exist")
 	}
 
-	return users[name].password == pass
+	var session Session
+	if users[name].password == pass {
+		session = Session{user: user, active: true}
+	} else {
+		session = Session{user: user, active: false}
+	}
+
+	return session, nil
 }
 
 func isRegularUser(name string, users map[string]User) (bool, error) {
@@ -111,6 +123,19 @@ func isAdminUser(name string, users map[string]User) (bool, error) {
 	return user.role == "Admin", nil
 }
 
+func promptUser() int32 {
+	var c int32
+	fmt.Println("Menu")
+	fmt.Println("===========")
+	fmt.Println("1. Logout")
+	fmt.Scanf("%d", &c)
+	return c
+}
+
+func isLoggedIn(name string, session Session) (bool) {
+	return session.user.username == name && session.active
+}
+
 func main() {
 	var u string
 	fmt.Print("Username: ")
@@ -122,5 +147,10 @@ func main() {
 
 	if err != nil {
 		panic("Could not obtain password")
+	}
+
+	sel := promptUser()
+	for sel != 1 {
+		sel = promptUser()
 	}
 }
