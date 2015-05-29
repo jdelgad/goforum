@@ -131,3 +131,13 @@ func TestIsLoggedIn(t *testing.T) {
 	assert.False(t, v)
 	assert.Nil(t, err)
 }
+
+func ExampleLoginPrompt() {
+	loginPrompt()
+	// Output:
+	// Menu
+	// ===========
+	// 1. Sign in
+	// 2. Create a new account
+	// 3. Quit
+}

@@ -133,6 +133,17 @@ func isLoggedIn(name string, session Session) bool {
 	return session.user.username == name && session.active
 }
 
+func loginPrompt() int32 {
+	var c int32
+	fmt.Println("Menu")
+	fmt.Println("===========")
+	fmt.Println("1. Sign in")
+	fmt.Println("2. Create a new account")
+	fmt.Println("3. Quit")
+	fmt.Scanf("%d", &c)
+	return c
+}
+
 func main() {
 	users, err := openPasswordFile("passwd")
 
