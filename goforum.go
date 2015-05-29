@@ -35,15 +35,14 @@ func readPasswordFile(file string) (map[string]User, error) {
 		return nil, errors.New("password file does not exist")
 	}
 
-	csvfile, err := os.Open(file)
+	f, err := os.Open(file)
+	defer f.Close()
 
 	if err != nil {
 		return nil, errors.New("could not open password file")
 	}
 
-	defer csvfile.Close()
-
-	reader := csv.NewReader(csvfile)
+	reader := csv.NewReader(f)
 
 	reader.FieldsPerRecord = -1 // see the Reader struct information below
 
@@ -163,7 +162,7 @@ func createUser(name string) (bool, error) {
 	return true, nil
 }
 
-func createUserPassword(name, password string) (error) {
+func createUserPassword(name, password string) error {
 	users, err := readPasswordFile("passwd")
 	if err != nil {
 		return errors.New("could not read user list")
@@ -176,14 +175,18 @@ func createUserPassword(name, password string) (error) {
 	return err
 }
 
-func writeUserFile(users map[string]User) (error) {
-	f, err := os.OpenFile("passwd", os.O_WRONLY, 0600)
+func writeUserFile(users map[string]User) error {
+	err := os.Remove("passwd")
+	if err != nil {
+		return errors.New("Could not remove user list")
+	}
+
+	f, err := os.OpenFile("passwd", os.O_WRONLY|os.O_CREATE, 0600)
+	defer f.Close()
 
 	if err != nil {
 		return errors.New("could not open password file")
 	}
-
-	defer f.Close()
 
 	w := csv.NewWriter(f)
 
@@ -203,6 +206,26 @@ func writeUserFile(users map[string]User) (error) {
 	}
 
 	return nil
+}
+
+func eraseUser(user string) error {
+	users, err := readPasswordFile("passwd")
+
+	if err != nil {
+		return errors.New("could not open user list")
+	}
+
+	_, ok := users[user]
+
+	if !ok {
+		return errors.New("cannot erase user. does not exist")
+	}
+
+	delete(users, user)
+
+	err = writeUserFile(users)
+
+	return err
 }
 
 func main() {

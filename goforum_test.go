@@ -165,6 +165,18 @@ func TestCreateUserPassword(t *testing.T) {
 	assert.True(t, v)
 }
 
+func TestEraseUser(t *testing.T) {
+	createUserPassword("newestUser", "pass3")
+	err := eraseUser("newestUser")
+
+	assert.Nil(t, err)
+
+	users, err := readPasswordFile("passwd")
+	_, ok := users["newestUser"]
+
+	assert.False(t, ok)
+}
+
 func ExampleInitialChoice() {
 	initialChoice(1)
 	// Output:
