@@ -6,41 +6,41 @@ import (
 )
 
 func TestPasswordFailure(t *testing.T) {
-	assert.False(t, validatePassword([]byte("testing"), "pow"))
+	assert.False(t, isPasswordValid([]byte("testing"), "pow"))
 }
 
 func TestPasswordSuccess(t *testing.T) {
-	assert.True(t, validatePassword([]byte("testing"), "testing"))
+	assert.True(t, isPasswordValid([]byte("testing"), "testing"))
 }
 
 func TestUsernameFailure(t *testing.T) {
 	user := User{username: "bad"}
 	users := make(map[string]User, 1)
 	users["bad"] = user
-	assert.False(t, validateUsername("jdelgad", users))
+	assert.False(t, isRegisteredUser("jdelgad", users))
 }
 
 func TestUsernameSuccess(t *testing.T) {
 	user := User{username: "jdelgad"}
 	users := make(map[string]User, 1)
 	users["jdelgad"] = user
-	assert.True(t, validateUsername("jdelgad", users))
+	assert.True(t, isRegisteredUser("jdelgad", users))
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
-	users, err := openPasswordFile("fakePasswd")
+	users, err := readPasswordFile("fakePasswd")
 	assert.Nil(t, users)
 	assert.Error(t, err)
 }
 
 func TestBlankPasswordFile(t *testing.T) {
-	users, err := openPasswordFile("blankPasswd")
+	users, err := readPasswordFile("blankPasswd")
 	assert.Empty(t, users)
 	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
@@ -53,22 +53,22 @@ func TestOpenPasswordFile(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
 	for name, user := range users {
-		_, ok := Authenticate(name, user.password, users)
+		_, ok := createSession(name, user.password, users)
 		assert.Nil(t, ok)
 	}
 
-	_, ok := Authenticate("foo", "bar", users)
+	_, ok := createSession("foo", "bar", users)
 	assert.NotNil(t, ok)
 }
 
 func TestRegularUser(t *testing.T) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -88,7 +88,7 @@ func TestRegularUser(t *testing.T) {
 }
 
 func TestAdminUser(t *testing.T) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -112,17 +112,17 @@ func ExamplePromptUser() {
 }
 
 func TestIsLoggedIn(t *testing.T) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	session, err := Authenticate("jdelgad", "pass", users)
+	session, err := createSession("jdelgad", "pass", users)
 	v := isLoggedIn("jdelgad", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	session, err = Authenticate("newUser", "pass2", users)
+	session, err = createSession("newUser", "pass2", users)
 	v = isLoggedIn("newUser", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
@@ -150,6 +150,19 @@ func TestCreateUser(t *testing.T) {
 	v, err = createUser("jdelgad")
 	assert.False(t, v)
 	assert.Error(t, err)
+}
+
+func TestCreateUserPassword(t *testing.T) {
+	createUserPassword("newestUser", "password")
+
+	users, err := readPasswordFile("passwd")
+	if err != nil {
+		assert.True(t, false)
+	}
+
+	v := isRegisteredUser("newestUser", users)
+
+	assert.True(t, v)
 }
 
 func ExampleInitialChoice() {

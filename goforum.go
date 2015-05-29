@@ -20,7 +20,7 @@ type Session struct {
 }
 
 // exists returns whether the given file or directory exists or not
-func exists(path string) bool {
+func doesFileExist(path string) bool {
 	_, err := os.Stat(path)
 
 	if err == nil {
@@ -30,8 +30,8 @@ func exists(path string) bool {
 	return false
 }
 
-func openPasswordFile(file string) (map[string]User, error) {
-	if !exists(file) {
+func readPasswordFile(file string) (map[string]User, error) {
+	if !doesFileExist(file) {
 		return nil, errors.New("password file does not exist")
 	}
 
@@ -70,13 +70,13 @@ func openPasswordFile(file string) (map[string]User, error) {
 	return userPass, nil
 }
 
-func validateUsername(n string, users map[string]User) bool {
+func isRegisteredUser(n string, users map[string]User) bool {
 	_, ok := users[n]
 
 	return ok
 }
 
-func validatePassword(b []byte, up string) bool {
+func isPasswordValid(b []byte, up string) bool {
 	if string(b) == up {
 		return true
 	}
@@ -84,7 +84,7 @@ func validatePassword(b []byte, up string) bool {
 	return false
 }
 
-func Authenticate(name, pass string, users map[string]User) (Session, error) {
+func createSession(name, pass string, users map[string]User) (Session, error) {
 	user, ok := users[name]
 	if !ok {
 		return Session{}, errors.New("user does not exist")
@@ -149,7 +149,7 @@ func initialChoice(choice int32) {
 }
 
 func createUser(name string) (bool, error) {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 	if err != nil {
 		return false, errors.New("could not get list of registered users")
 	}
@@ -163,16 +163,58 @@ func createUser(name string) (bool, error) {
 	return true, nil
 }
 
+func createUserPassword(name, password string) (error) {
+	users, err := readPasswordFile("passwd")
+	if err != nil {
+		return errors.New("could not read user list")
+	}
+
+	user := User{username: name, password: password, role: "Regular"}
+	users[name] = user
+
+	err = writeUserFile(users)
+	return err
+}
+
+func writeUserFile(users map[string]User) (error) {
+	f, err := os.OpenFile("passwd", os.O_WRONLY, 0600)
+
+	if err != nil {
+		return errors.New("could not open password file")
+	}
+
+	defer f.Close()
+
+	w := csv.NewWriter(f)
+
+	records := make([][]string, 0)
+	for _, info := range users {
+		record := make([]string, 0)
+		record = append(record, info.username)
+		record = append(record, info.password)
+		record = append(record, info.role)
+		records = append(records, record)
+	}
+
+	err = w.WriteAll(records)
+
+	if err != nil {
+		return errors.New("could not write password file")
+	}
+
+	return nil
+}
+
 func main() {
-	users, err := openPasswordFile("passwd")
+	users, err := readPasswordFile("passwd")
 
 	if err != nil {
 		panic("Could not open password file")
 	}
 
-	validUsername := false
-	validPassword := false
-	for !validUsername || !validPassword {
+	vu := false
+	vp := false
+	for !vu || !vp {
 		var u string
 		fmt.Print("Username: ")
 		fmt.Scanf("%s", &u)
@@ -185,14 +227,14 @@ func main() {
 			panic("Could not obtain password")
 		}
 
-		validUsername = validateUsername(u, users)
+		vu = isRegisteredUser(u, users)
 
 		user, ok := users[u]
 
 		if !ok {
-			validPassword = false
+			vp = false
 		} else {
-			validPassword = validatePassword([]byte(pass), user.password)
+			vp = isPasswordValid([]byte(pass), user.password)
 		}
 	}
 
