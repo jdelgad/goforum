@@ -144,6 +144,25 @@ func loginPrompt() int32 {
 	return c
 }
 
+func initialChoice(choice int32) {
+	promptUser()
+}
+
+func createUser(name string) (bool, error) {
+	users, err := openPasswordFile("passwd")
+	if err != nil {
+		return false, errors.New("could not get list of registered users")
+	}
+
+	_, ok := users[name]
+
+	if ok {
+		return false, errors.New("username already taken")
+	}
+
+	return true, nil
+}
+
 func main() {
 	users, err := openPasswordFile("passwd")
 

@@ -141,3 +141,21 @@ func ExampleLoginPrompt() {
 	// 2. Create a new account
 	// 3. Quit
 }
+
+func TestCreateUser(t *testing.T) {
+	v, err := createUser("newestUser")
+	assert.True(t, v)
+	assert.NoError(t, err)
+
+	v, err = createUser("jdelgad")
+	assert.False(t, v)
+	assert.Error(t, err)
+}
+
+func ExampleInitialChoice() {
+	initialChoice(1)
+	// Output:
+	// Menu
+	// ===========
+	// 1. Logout
+}
