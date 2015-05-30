@@ -19,8 +19,8 @@ type Session struct {
 	active bool
 }
 
-// exists returns whether the given file or directory exists or not
-func doesFileExist(path string) bool {
+// returns whether the given file exists or not
+func isFile(path string) bool {
 	_, err := os.Stat(path)
 
 	if err == nil {
@@ -30,23 +30,23 @@ func doesFileExist(path string) bool {
 	return false
 }
 
-func readPasswordFile(file string) (map[string]User, error) {
-	if !doesFileExist(file) {
+func getUserPasswordList(file string) (map[string]User, error) {
+	if !isFile(file) {
 		return nil, errors.New("password file does not exist")
 	}
 
 	f, err := os.Open(file)
-	defer f.Close()
 
 	if err != nil {
 		return nil, errors.New("could not open password file")
 	}
 
+	defer f.Close()
+
 	reader := csv.NewReader(f)
+	reader.FieldsPerRecord = -1
 
-	reader.FieldsPerRecord = -1 // see the Reader struct information below
-
-	rawCSVdata, err := reader.ReadAll()
+	rows, err := reader.ReadAll()
 
 	if err != nil {
 		return nil, errors.New("could not read password file")
@@ -54,7 +54,7 @@ func readPasswordFile(file string) (map[string]User, error) {
 
 	var userPass = make(map[string]User)
 
-	for _, each := range rawCSVdata {
+	for _, each := range rows {
 		var username, password, role string
 		if len(each) == 3 {
 			username, password, role = each[0], each[1], each[2]
@@ -83,7 +83,7 @@ func isPasswordValid(b []byte, up string) bool {
 	return false
 }
 
-func createSession(name, pass string, users map[string]User) (Session, error) {
+func openSession(name, pass string, users map[string]User) (Session, error) {
 	user, ok := users[name]
 	if !ok {
 		return Session{}, errors.New("user does not exist")
@@ -119,7 +119,7 @@ func isAdminUser(name string, users map[string]User) (bool, error) {
 	return user.role == "Admin", nil
 }
 
-func promptUser() int32 {
+func loggedInPrompt() int32 {
 	var c int32
 	fmt.Println("Menu")
 	fmt.Println("===========")
@@ -132,7 +132,7 @@ func isLoggedIn(name string, session Session) bool {
 	return session.user.username == name && session.active
 }
 
-func loginPrompt() int32 {
+func mainPrompt() int32 {
 	var c int32
 	fmt.Println("Menu")
 	fmt.Println("===========")
@@ -144,11 +144,11 @@ func loginPrompt() int32 {
 }
 
 func initialChoice(choice int32) {
-	promptUser()
+	loggedInPrompt()
 }
 
-func createUser(name string) (bool, error) {
-	users, err := readPasswordFile("passwd")
+func isValidUsername(name string) (bool, error) {
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		return false, errors.New("could not get list of registered users")
 	}
@@ -162,8 +162,8 @@ func createUser(name string) (bool, error) {
 	return true, nil
 }
 
-func createUserPassword(name, password string) error {
-	users, err := readPasswordFile("passwd")
+func registerUser(name, password string) error {
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		return errors.New("could not read user list")
 	}
@@ -171,15 +171,11 @@ func createUserPassword(name, password string) error {
 	user := User{username: name, password: password, role: "Regular"}
 	users[name] = user
 
-	err = writeUserFile(users)
+	err = updateUserList(users)
 	return err
 }
 
-func writeUserFile(users map[string]User) error {
-	err := os.Remove("passwd")
-	if err != nil {
-		return errors.New("Could not remove user list")
-	}
+func updateUserList(users map[string]User) error {
 
 	f, err := os.OpenFile("passwd", os.O_WRONLY|os.O_CREATE, 0600)
 	defer f.Close()
@@ -208,8 +204,8 @@ func writeUserFile(users map[string]User) error {
 	return nil
 }
 
-func eraseUser(user string) error {
-	users, err := readPasswordFile("passwd")
+func deleteUser(user string) error {
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		return errors.New("could not open user list")
@@ -223,13 +219,13 @@ func eraseUser(user string) error {
 
 	delete(users, user)
 
-	err = writeUserFile(users)
+	err = updateUserList(users)
 
 	return err
 }
 
 func main() {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		panic("Could not open password file")
@@ -261,8 +257,8 @@ func main() {
 		}
 	}
 
-	sel := promptUser()
+	sel := loggedInPrompt()
 	for sel != 1 {
-		sel = promptUser()
+		sel = loggedInPrompt()
 	}
 }

@@ -28,19 +28,19 @@ func TestUsernameSuccess(t *testing.T) {
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
-	users, err := readPasswordFile("fakePasswd")
+	users, err := getUserPasswordList("fakePasswd")
 	assert.Nil(t, users)
 	assert.Error(t, err)
 }
 
 func TestBlankPasswordFile(t *testing.T) {
-	users, err := readPasswordFile("blankPasswd")
+	users, err := getUserPasswordList("blankPasswd")
 	assert.Empty(t, users)
 	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
@@ -53,22 +53,22 @@ func TestOpenPasswordFile(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
 	for name, user := range users {
-		_, ok := createSession(name, user.password, users)
+		_, ok := openSession(name, user.password, users)
 		assert.Nil(t, ok)
 	}
 
-	_, ok := createSession("foo", "bar", users)
+	_, ok := openSession("foo", "bar", users)
 	assert.NotNil(t, ok)
 }
 
 func TestRegularUser(t *testing.T) {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -88,7 +88,7 @@ func TestRegularUser(t *testing.T) {
 }
 
 func TestAdminUser(t *testing.T) {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -104,7 +104,7 @@ func TestAdminUser(t *testing.T) {
 }
 
 func ExamplePromptUser() {
-	promptUser()
+	loggedInPrompt()
 	// Output:
 	// Menu
 	// ===========
@@ -112,17 +112,17 @@ func ExamplePromptUser() {
 }
 
 func TestIsLoggedIn(t *testing.T) {
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	session, err := createSession("jdelgad", "pass", users)
+	session, err := openSession("jdelgad", "pass", users)
 	v := isLoggedIn("jdelgad", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	session, err = createSession("newUser", "pass2", users)
+	session, err = openSession("newUser", "pass2", users)
 	v = isLoggedIn("newUser", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
@@ -133,7 +133,7 @@ func TestIsLoggedIn(t *testing.T) {
 }
 
 func ExampleLoginPrompt() {
-	loginPrompt()
+	mainPrompt()
 	// Output:
 	// Menu
 	// ===========
@@ -143,19 +143,19 @@ func ExampleLoginPrompt() {
 }
 
 func TestCreateUser(t *testing.T) {
-	v, err := createUser("newestUser")
+	v, err := isValidUsername("newestUser")
 	assert.True(t, v)
 	assert.NoError(t, err)
 
-	v, err = createUser("jdelgad")
+	v, err = isValidUsername("jdelgad")
 	assert.False(t, v)
 	assert.Error(t, err)
 }
 
 func TestCreateUserPassword(t *testing.T) {
-	createUserPassword("newestUser", "password")
+	registerUser("newestUser", "password")
 
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
@@ -165,13 +165,13 @@ func TestCreateUserPassword(t *testing.T) {
 	assert.True(t, v)
 }
 
-func TestEraseUser(t *testing.T) {
-	createUserPassword("newestUser", "pass3")
-	err := eraseUser("newestUser")
+func TestDeleteUser(t *testing.T) {
+	registerUser("newestUser", "pass3")
+	err := deleteUser("newestUser")
 
 	assert.Nil(t, err)
 
-	users, err := readPasswordFile("passwd")
+	users, err := getUserPasswordList("passwd")
 	_, ok := users["newestUser"]
 
 	assert.False(t, ok)
