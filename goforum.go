@@ -58,8 +58,10 @@ func getUserPasswordList(file string) (map[string]User, error) {
 		var username, password, role string
 		if len(each) == 3 {
 			username, password, role = each[0], each[1], each[2]
-		} else {
+		} else if len(each) == 2 {
 			username, password, role = each[0], each[1], "Regular"
+		} else {
+			continue
 		}
 
 		userInfo := User{username: username, password: password, role: role}
@@ -176,13 +178,18 @@ func registerUser(name, password string) error {
 }
 
 func updateUserList(users map[string]User) error {
+	err := os.Remove("passwd")
+
+	if err != nil {
+		return errors.New("could not remove password file")
+	}
 
 	f, err := os.OpenFile("passwd", os.O_WRONLY|os.O_CREATE, 0600)
-	defer f.Close()
 
 	if err != nil {
 		return errors.New("could not open password file")
 	}
+	defer f.Close()
 
 	w := csv.NewWriter(f)
 

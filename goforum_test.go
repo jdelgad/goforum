@@ -152,7 +152,7 @@ func TestCreateUser(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCreateUserPassword(t *testing.T) {
+func TestRegisterUser(t *testing.T) {
 	registerUser("newestUser", "password")
 
 	users, err := getUserPasswordList("passwd")
