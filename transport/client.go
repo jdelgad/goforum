@@ -4,24 +4,23 @@ import (
 	"github.com/gdamore/mangos"
 	"github.com/gdamore/mangos/protocol/req"
 	"github.com/gdamore/mangos/transport/tcp"
-	"log"
-	"os"
+	"errors"
 )
 
-func OpenConnectSocket(address string) {
+func OpenConnectSocket(address string) (mangos.Socket, error) {
 	socket, err := req.NewSocket()
 
 	if err != nil {
-		log.Fatal("Could not get request socket")
-		os.Exit(-1)
+		return nil, errors.New("Could not create socket")
 	}
 
 	socket.AddTransport(tcp.NewTransport())
 	err = socket.Dial(address)
 	if err != nil {
-		log.Fatal("Could not open request socket on address: %s", address)
-		os.Exit(-1)
+		return nil, errors.New("Could not connect to address " + address)
 	}
+
+	return socket, nil
 }
 
 func ParseReply(s mangos.Socket) ([]byte, error) {
