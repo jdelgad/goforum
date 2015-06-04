@@ -11,14 +11,14 @@ func NewClientSocket() *ClientSocket {
 }
 
 func (s *ClientSocket) Open() error {
-	sock, err := req.NewSocket()
+	socket, err := req.NewSocket()
 
 	if err != nil {
 		return errors.New("Could not create socket")
 	}
 
-	sock.AddTransport(tcp.NewTransport())
-	s.socket = sock
+	socket.AddTransport(tcp.NewTransport())
+	s.socket = socket
 	return nil
 }
 

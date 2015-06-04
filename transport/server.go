@@ -1,36 +1,39 @@
 package transport
 
 import (
-	"github.com/gdamore/mangos"
+	"errors"
 	"github.com/gdamore/mangos/protocol/rep"
 	"github.com/gdamore/mangos/transport/tcp"
-	"errors"
 )
 
-func OpenListenSocket(address string) (mangos.Socket, error) {
+func NewServerSocket() *ServerSocket {
+	return &ServerSocket{}
+}
+
+func (s *ServerSocket) Open() error {
 	socket, err := rep.NewSocket()
 
 	if err != nil {
-		return nil, errors.New("Could not create reply socket")
+		return errors.New("Could not create reply socket")
 	}
 
 	socket.AddTransport(tcp.NewTransport())
-	err = socket.Listen(address)
-	if err != nil {
-		return nil, errors.New("Could not listen on address " + address)
-	}
-
-	return socket, nil
+	s.socket = socket
+	return nil
 }
 
-func CloseListenSocket(s mangos.Socket) {
-	s.Close()
+func (s *ServerSocket) Connect(address string) error {
+	return s.socket.Listen(address)
 }
 
-func ParseRequest(s mangos.Socket) ([]byte, error) {
-	return s.Recv()
+func (s *ServerSocket) Receive() ([]byte, error) {
+	return s.socket.Recv()
 }
 
-func SendReply(s mangos.Socket, reply []byte) error {
-	return s.Send(reply)
+func (s *ServerSocket) Send(data []byte) error {
+	return s.socket.Send(data)
+}
+
+func (s *ServerSocket) Close() error {
+	return s.socket.Close()
 }

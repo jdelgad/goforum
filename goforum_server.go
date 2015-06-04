@@ -7,14 +7,12 @@ import (
 )
 
 func main() {
-	s, err := transport.OpenListenSocket("tcp://127.0.0.1:4000")
-
-	if err != nil {
-		log.Fatal("Could not listen for incoming requests on port 4000")
-	}
+	s := transport.NewServerSocket()
+	s.Open()
+	s.Connect("tcp://127.0.0.1:4000")
 
 	for {
-		b, err := transport.ParseRequest(s)
+		b, err := s.Receive()
 
 		if err != nil {
 			log.Fatal("could not parse incoming request")
@@ -23,5 +21,5 @@ func main() {
 		fmt.Println(string(b))
 	}
 
-	transport.CloseListenSocket(s)
+	s.Close()
 }
