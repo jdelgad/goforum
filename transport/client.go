@@ -7,7 +7,7 @@ import (
 )
 
 func NewClientSocket() *ClientSocket {
-	return &ClientSocket{}
+	return new(ClientSocket)
 }
 
 func (s *ClientSocket) Open() error {

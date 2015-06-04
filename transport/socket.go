@@ -6,7 +6,7 @@ import (
 
 type Socketer interface {
 	Open() error
-	Connect(address string) ([]byte, error)
+	Connect(address string) error
 	Receive() ([]byte, error)
 	Send(data []byte) error
 	Close() error
