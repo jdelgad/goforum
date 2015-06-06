@@ -1,10 +1,9 @@
-package main
+package authenticator
 
 import (
 	"encoding/csv"
 	"errors"
 	"fmt"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
 )
 
@@ -30,7 +29,7 @@ func isFile(path string) bool {
 	return false
 }
 
-func getUserPasswordList(file string) (map[string]User, error) {
+func GetUserPasswordList(file string) (map[string]User, error) {
 	if !isFile(file) {
 		return nil, errors.New("password file does not exist")
 	}
@@ -150,7 +149,7 @@ func initialChoice(choice int32) {
 }
 
 func isValidUsername(name string) (bool, error) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		return false, errors.New("could not get list of registered users")
 	}
@@ -165,7 +164,7 @@ func isValidUsername(name string) (bool, error) {
 }
 
 func registerUser(name, password string) error {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		return errors.New("could not read user list")
 	}
@@ -212,7 +211,7 @@ func updateUserList(users map[string]User) error {
 }
 
 func deleteUser(user string) error {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 
 	if err != nil {
 		return errors.New("could not open user list")
@@ -229,43 +228,4 @@ func deleteUser(user string) error {
 	err = updateUserList(users)
 
 	return err
-}
-
-func main() {
-	users, err := getUserPasswordList("passwd")
-
-	if err != nil {
-		panic("Could not open password file")
-	}
-
-	vu := false
-	vp := false
-	for !vu || !vp {
-		var u string
-		fmt.Print("Username: ")
-		fmt.Scanf("%s", &u)
-
-		fmt.Print("Enter password: ")
-		pass, err := terminal.ReadPassword(0)
-		fmt.Println()
-
-		if err != nil {
-			panic("Could not obtain password")
-		}
-
-		vu = isRegisteredUser(u, users)
-
-		user, ok := users[u]
-
-		if !ok {
-			vp = false
-		} else {
-			vp = isPasswordValid([]byte(pass), user.password)
-		}
-	}
-
-	sel := loggedInPrompt()
-	for sel != 1 {
-		sel = loggedInPrompt()
-	}
 }

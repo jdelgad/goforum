@@ -1,9 +1,12 @@
-package main
+package authenticator
 
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func Test(t *testing.T) {
+}
 
 func TestPasswordFailure(t *testing.T) {
 	assert.False(t, isPasswordValid([]byte("testing"), "pow"))
@@ -28,19 +31,19 @@ func TestUsernameSuccess(t *testing.T) {
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
-	users, err := getUserPasswordList("fakePasswd")
+	users, err := GetUserPasswordList("fakePasswd")
 	assert.Nil(t, users)
 	assert.Error(t, err)
 }
 
 func TestBlankPasswordFile(t *testing.T) {
-	users, err := getUserPasswordList("blankPasswd")
+	users, err := GetUserPasswordList("blankPasswd")
 	assert.Empty(t, users)
 	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
@@ -53,7 +56,7 @@ func TestOpenPasswordFile(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
@@ -68,7 +71,7 @@ func TestAuthenticate(t *testing.T) {
 }
 
 func TestRegularUser(t *testing.T) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -88,7 +91,7 @@ func TestRegularUser(t *testing.T) {
 }
 
 func TestAdminUser(t *testing.T) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
@@ -112,7 +115,7 @@ func ExamplePromptUser() {
 }
 
 func TestIsLoggedIn(t *testing.T) {
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
@@ -155,7 +158,7 @@ func TestCreateUser(t *testing.T) {
 func TestRegisterUser(t *testing.T) {
 	registerUser("newestUser", "password")
 
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
@@ -171,7 +174,7 @@ func TestDeleteUser(t *testing.T) {
 
 	assert.Nil(t, err)
 
-	users, err := getUserPasswordList("passwd")
+	users, err := GetUserPasswordList("passwd")
 	_, ok := users["newestUser"]
 
 	assert.False(t, ok)
