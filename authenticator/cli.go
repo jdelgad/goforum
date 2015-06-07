@@ -31,19 +31,20 @@ func main() {
 			panic("Could not obtain password")
 		}
 
-		vu = isRegisteredUser(u, users)
+		vu = authenticator.IsRegisteredUser(u, users)
 
 		user, ok := users[u]
 
 		if !ok {
 			vp = false
 		} else {
-			vp = isPasswordValid([]byte(pass), user.password)
+			password := string(pass)
+			vp = authenticator.IsPasswordValid(password, user.Password, users)
 		}
 	}
 
-	sel := loggedInPrompt()
+	sel := authenticator.LoggedInPrompt()
 	for sel != 1 {
-		sel = loggedInPrompt()
+		sel =  authenticator.LoggedInPrompt()
 	}
 }

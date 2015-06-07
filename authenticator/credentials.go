@@ -8,9 +8,9 @@ import (
 )
 
 type User struct {
-	username string
-	role     string
-	password string
+	Username string
+	Role     string
+	Password string
 }
 
 type Session struct {
@@ -63,25 +63,26 @@ func GetUserPasswordList(file string) (map[string]User, error) {
 			continue
 		}
 
-		userInfo := User{username: username, password: password, role: role}
+		userInfo := User{Username: username, Password: password, Role: role}
 		userPass[username] = userInfo
 	}
 
 	return userPass, nil
 }
 
-func isRegisteredUser(n string, users map[string]User) bool {
-	_, ok := users[n]
+func IsRegisteredUser(u string, users map[string]User) bool {
+	_, ok := users[u]
 
 	return ok
 }
 
-func isPasswordValid(b []byte, up string) bool {
-	if string(b) == up {
-		return true
+func IsPasswordValid(u string, p string, users map[string]User) bool {
+	user, ok := users[u]
+	if !ok {
+		return false
 	}
 
-	return false
+	return p == user.Password
 }
 
 func openSession(name, pass string, users map[string]User) (Session, error) {
@@ -91,7 +92,7 @@ func openSession(name, pass string, users map[string]User) (Session, error) {
 	}
 
 	var session Session
-	if users[name].password == pass {
+	if users[name].Password == pass {
 		session = Session{user: user, active: true}
 	} else {
 		session = Session{user: user, active: false}
@@ -107,7 +108,7 @@ func isRegularUser(name string, users map[string]User) (bool, error) {
 		return false, errors.New("user not found")
 	}
 
-	return user.role == "Regular", nil
+	return user.Role == "Regular", nil
 }
 
 func isAdminUser(name string, users map[string]User) (bool, error) {
@@ -117,10 +118,10 @@ func isAdminUser(name string, users map[string]User) (bool, error) {
 		return false, errors.New("user not found")
 	}
 
-	return user.role == "Admin", nil
+	return user.Role == "Admin", nil
 }
 
-func loggedInPrompt() int32 {
+func LoggedInPrompt() int32 {
 	var c int32
 	fmt.Println("Menu")
 	fmt.Println("===========")
@@ -130,7 +131,7 @@ func loggedInPrompt() int32 {
 }
 
 func isLoggedIn(name string, session Session) bool {
-	return session.user.username == name && session.active
+	return session.user.Username == name && session.active
 }
 
 func mainPrompt() int32 {
@@ -145,7 +146,7 @@ func mainPrompt() int32 {
 }
 
 func initialChoice(choice int32) {
-	loggedInPrompt()
+	LoggedInPrompt()
 }
 
 func isValidUsername(name string) (bool, error) {
@@ -169,7 +170,7 @@ func registerUser(name, password string) error {
 		return errors.New("could not read user list")
 	}
 
-	user := User{username: name, password: password, role: "Regular"}
+	user := User{Username: name, Password: password, Role: "Regular"}
 	users[name] = user
 
 	err = updateUserList(users)
@@ -195,9 +196,9 @@ func updateUserList(users map[string]User) error {
 	records := make([][]string, 0)
 	for _, info := range users {
 		record := make([]string, 0)
-		record = append(record, info.username)
-		record = append(record, info.password)
-		record = append(record, info.role)
+		record = append(record, info.Username)
+		record = append(record, info.Password)
+		record = append(record, info.Role)
 		records = append(records, record)
 	}
 

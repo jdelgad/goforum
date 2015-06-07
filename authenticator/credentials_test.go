@@ -9,25 +9,29 @@ func Test(t *testing.T) {
 }
 
 func TestPasswordFailure(t *testing.T) {
-	assert.False(t, isPasswordValid([]byte("testing"), "pow"))
+	m := make(map[string]string)
+	m["user"] = "badpass"
+	assert.False(t, IsPasswordValid("testing", "user", m))
 }
 
 func TestPasswordSuccess(t *testing.T) {
-	assert.True(t, isPasswordValid([]byte("testing"), "testing"))
+	m := make(map[string]string)
+	m["user"] = "testing"
+	assert.True(t, IsPasswordValid("testing", "user", m))
 }
 
 func TestUsernameFailure(t *testing.T) {
-	user := User{username: "bad"}
+	user := User{Username: "bad"}
 	users := make(map[string]User, 1)
 	users["bad"] = user
-	assert.False(t, isRegisteredUser("jdelgad", users))
+	assert.False(t, IsRegisteredUser("jdelgad", users))
 }
 
 func TestUsernameSuccess(t *testing.T) {
-	user := User{username: "jdelgad"}
+	user := User{Username: "jdelgad"}
 	users := make(map[string]User, 1)
 	users["jdelgad"] = user
-	assert.True(t, isRegisteredUser("jdelgad", users))
+	assert.True(t, IsRegisteredUser("jdelgad", users))
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
@@ -50,9 +54,9 @@ func TestOpenPasswordFile(t *testing.T) {
 
 	v, ok := users["jdelgad"]
 	assert.NotNil(t, ok)
-	assert.Equal(t, v.username, "jdelgad")
-	assert.Equal(t, v.password, "pass")
-	assert.Equal(t, v.role, "Admin")
+	assert.Equal(t, v.Username, "jdelgad")
+	assert.Equal(t, v.Password, "pass")
+	assert.Equal(t, v.Role, "Admin")
 }
 
 func TestAuthenticate(t *testing.T) {
@@ -62,7 +66,7 @@ func TestAuthenticate(t *testing.T) {
 	}
 
 	for name, user := range users {
-		_, ok := openSession(name, user.password, users)
+		_, ok := openSession(name, user.Password, users)
 		assert.Nil(t, ok)
 	}
 
@@ -107,7 +111,7 @@ func TestAdminUser(t *testing.T) {
 }
 
 func ExamplePromptUser() {
-	loggedInPrompt()
+	LoggedInPrompt()
 	// Output:
 	// Menu
 	// ===========
@@ -163,7 +167,7 @@ func TestRegisterUser(t *testing.T) {
 		assert.True(t, false)
 	}
 
-	v := isRegisteredUser("newestUser", users)
+	v := IsRegisteredUser("newestUser", users)
 
 	assert.True(t, v)
 }
