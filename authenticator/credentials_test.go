@@ -5,19 +5,21 @@ import (
 	"testing"
 )
 
-func Test(t *testing.T) {
+func TestPasswordFailureNoUser(t *testing.T) {
+	m := make(map[string]User)
+	assert.False(t, IsPasswordValid("user", "testing", m))
 }
 
 func TestPasswordFailure(t *testing.T) {
-	m := make(map[string]string)
-	m["user"] = "badpass"
-	assert.False(t, IsPasswordValid("testing", "user", m))
+	m := make(map[string]User)
+	m["user"] = User{Password: "pow"}
+	assert.False(t, IsPasswordValid("user", "testing", m))
 }
 
 func TestPasswordSuccess(t *testing.T) {
-	m := make(map[string]string)
-	m["user"] = "testing"
-	assert.True(t, IsPasswordValid("testing", "user", m))
+	m := make(map[string]User)
+	m["user"] = User{Password: "testing"}
+	assert.True(t, IsPasswordValid("user", "testing", m))
 }
 
 func TestUsernameFailure(t *testing.T) {
