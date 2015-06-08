@@ -5,77 +5,41 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	"io/ioutil"
 	"net/http"
+	"io/ioutil"
 )
 
-type Page struct {
-	html []byte
-}
+func loginHandler(response http.ResponseWriter, request *http.Request) {
+	name := request.FormValue("username")
+	pw := request.FormValue("password")
 
-func loadPage(title string) (*Page, error) {
-	filename := title + ".html"
-	body, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		return nil, err
+	target := "/"
+	if name != "" && pw != "" {
+		target = "/user"
 	}
-
-	return &Page{html: body}, nil
+	http.Redirect(response, request, target, 302)
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	title := "index"
-	p, err := loadPage(title)
+func userHandler(w http.ResponseWriter, r *http.Request) {
+	b, err := ioutil.ReadFile("www/user/index.html")
 
 	if err != nil {
 		http.NotFound(w, r)
-		return
+	} else {
+		fmt.Fprintf(w, string(b))
 	}
-
-	fmt.Fprintf(w, string(p.html))
-}
-
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/login/"):]
-
-	if len(title) == 0 {
-		title = "login"
-	}
-
-	p, err := loadPage(title)
-
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	fmt.Fprintf(w, string(p.html))
-}
-
-func SignupHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/signup/"):]
-
-	if len(title) == 0 {
-		title = "signup"
-	}
-
-	p, err := loadPage(title)
-
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	fmt.Fprintf(w, string(p.html))
 }
 
 func main() {
+
 	r := mux.NewRouter()
-	r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/login/", LoginHandler)
-	r.HandleFunc("/signup/", SignupHandler)
+
+	r.HandleFunc("/login/", loginHandler).Methods("POST")
+	r.HandleFunc("/user/", userHandler)
+
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("www/")))
 	http.Handle("/", r)
 
-	http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":8082", r)
+	fmt.Println(err.Error())
 }
