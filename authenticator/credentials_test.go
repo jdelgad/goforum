@@ -6,50 +6,39 @@ import (
 )
 
 func TestPasswordFailureNoUser(t *testing.T) {
-	m := make(map[string]User)
-	assert.False(t, IsPasswordValid("user", "testing", m))
+	assert.False(t, IsValidUserPass("user", []byte("testing")))
 }
 
 func TestPasswordFailure(t *testing.T) {
-	m := make(map[string]User)
-	m["user"] = User{Password: "pow"}
-	assert.False(t, IsPasswordValid("user", "testing", m))
+	assert.False(t, IsValidUserPass("user", []byte("testing")))
 }
 
 func TestPasswordSuccess(t *testing.T) {
-	m := make(map[string]User)
-	m["user"] = User{Password: "testing"}
-	assert.True(t, IsPasswordValid("user", "testing", m))
+	assert.True(t, IsValidUserPass("jdelgad", []byte("pass")))
 }
 
 func TestUsernameFailure(t *testing.T) {
-	user := User{Username: "bad"}
-	users := make(map[string]User, 1)
-	users["bad"] = user
-	assert.False(t, IsRegisteredUser("jdelgad", users))
+	assert.False(t, IsRegisteredUser("fakeUser"))
 }
 
 func TestUsernameSuccess(t *testing.T) {
-	user := User{Username: "jdelgad"}
-	users := make(map[string]User, 1)
-	users["jdelgad"] = user
-	assert.True(t, IsRegisteredUser("jdelgad", users))
+	assert.True(t, IsRegisteredUser("jdelgad"))
 }
 
 func TestPasswordFileDoesNotExist(t *testing.T) {
-	users, err := GetUserPasswordList("fakePasswd")
+	users, err := getUserPasswordList("fakePasswd")
 	assert.Nil(t, users)
 	assert.Error(t, err)
 }
 
 func TestBlankPasswordFile(t *testing.T) {
-	users, err := GetUserPasswordList("blankPasswd")
+	users, err := getUserPasswordList("blankPasswd")
 	assert.Empty(t, users)
 	assert.NoError(t, err)
 }
 
 func TestOpenPasswordFile(t *testing.T) {
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 	assert.NotEmpty(t, users)
 	assert.Equal(t, len(users), 2)
 	assert.NoError(t, err)
@@ -62,134 +51,103 @@ func TestOpenPasswordFile(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
 	for name, user := range users {
-		_, ok := openSession(name, user.Password, users)
+		_, ok := OpenSession(name, user.Password, users)
 		assert.Nil(t, ok)
 	}
 
-	_, ok := openSession("foo", "bar", users)
+	_, ok := OpenSession("foo", "bar", users)
 	assert.NotNil(t, ok)
 }
 
 func TestRegularUser(t *testing.T) {
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	v, err := isRegularUser("jdelgad", users)
+	v, err := IsRegularUser("jdelgad", users)
 	assert.False(t, v)
 	assert.Nil(t, err)
 
-	v, err = isRegularUser("newUser", users)
+	v, err = IsRegularUser("newUser", users)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	v, err = isRegularUser("noSuchUser", users)
+	v, err = IsRegularUser("noSuchUser", users)
 	assert.False(t, v)
 	assert.NotNil(t, err)
 }
 
 func TestAdminUser(t *testing.T) {
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	v, err := isAdminUser("jdelgad", users)
+	v, err := IsAdminUser("jdelgad", users)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	v, err = isAdminUser("newUser", users)
+	v, err = IsAdminUser("newUser", users)
 	assert.False(t, v)
 	assert.Nil(t, err)
-}
-
-func ExamplePromptUser() {
-	LoggedInPrompt()
-	// Output:
-	// Menu
-	// ===========
-	// 1. Logout
 }
 
 func TestIsLoggedIn(t *testing.T) {
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		assert.True(t, false)
 	}
 
-	session, err := openSession("jdelgad", "pass", users)
-	v := isLoggedIn("jdelgad", session)
+	session, err := OpenSession("jdelgad", "pass", users)
+	v := IsLoggedIn("jdelgad", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	session, err = openSession("newUser", "pass2", users)
-	v = isLoggedIn("newUser", session)
+	session, err = OpenSession("newUser", "pass2", users)
+	v = IsLoggedIn("newUser", session)
 	assert.True(t, v)
 	assert.Nil(t, err)
 
-	v = isLoggedIn("jdelgad", session)
+	v = IsLoggedIn("jdelgad", session)
 	assert.False(t, v)
 	assert.Nil(t, err)
 }
 
-func ExampleLoginPrompt() {
-	mainPrompt()
-	// Output:
-	// Menu
-	// ===========
-	// 1. Sign in
-	// 2. Create a new account
-	// 3. Quit
-}
-
 func TestCreateUser(t *testing.T) {
-	v, err := isValidUsername("newestUser")
+	v, err := IsValidNewUsername("newestUser")
 	assert.True(t, v)
 	assert.NoError(t, err)
 
-	v, err = isValidUsername("jdelgad")
+	v, err = IsValidNewUsername("jdelgad")
 	assert.False(t, v)
 	assert.Error(t, err)
 }
 
 func TestRegisterUser(t *testing.T) {
-	registerUser("newestUser", "password")
+	RegisterUser("newestUser", "password")
 
-	users, err := GetUserPasswordList("passwd")
-	if err != nil {
-		assert.True(t, false)
-	}
-
-	v := IsRegisteredUser("newestUser", users)
+	v := IsRegisteredUser("newestUser")
 
 	assert.True(t, v)
 }
 
 func TestDeleteUser(t *testing.T) {
-	registerUser("newestUser", "pass3")
-	err := deleteUser("newestUser")
+	RegisterUser("newestUser", "pass3")
+	err := DeleteUser("newestUser")
 
 	assert.Nil(t, err)
 
-	users, err := GetUserPasswordList("passwd")
+	users, err := getUserPasswordList("passwd")
 	_, ok := users["newestUser"]
 
 	assert.False(t, ok)
-}
-
-func ExampleInitialChoice() {
-	initialChoice(1)
-	// Output:
-	// Menu
-	// ===========
-	// 1. Logout
 }

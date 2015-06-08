@@ -5,26 +5,32 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/jdelgad/goforum/protos"
 	"github.com/jdelgad/goforum/transport"
-	"log"
 )
 
-func SetupSocket(address string) *transport.ServerSocket {
+func SetupServerSocket(address string) *transport.ServerSocket {
 	s := transport.NewServerSocket()
 	s.Open()
 	s.Connect(address)
 	return s
 }
 
-func CreateReply() *protos.LoginReply {
+func SetupClientSocket(address string) *transport.ClientSocket {
+	s := transport.NewClientSocket()
+	s.Open()
+	s.Connect(address)
+	return s
+}
+
+func CreateLoginReply() *protos.LoginReply {
 	return &protos.LoginReply{}
 }
 
-func CreateRequest() *protos.Login {
+func CreateLoginRequest() *protos.Login {
 	return &protos.Login{}
 }
 
-func parseRequest(b []byte) (*protos.Login, error) {
-	login := CreateRequest()
+func parseLoginRequest(b []byte) (*protos.Login, error) {
+	login := CreateLoginRequest()
 	err := proto.Unmarshal(b, login)
 
 	if err != nil {
@@ -35,13 +41,7 @@ func parseRequest(b []byte) (*protos.Login, error) {
 }
 
 func isValidLogin(l protos.Login) bool {
-	users, err := GetUserPasswordList("passwd")
-
-	if err != nil {
-		log.Fatal("Could not retrieve user password list")
-	}
-
-	return IsRegisteredUser(*l.Username, users) && IsPasswordValid(*l.Username, *l.Password, users)
+	return IsRegisteredUser(*l.Username) && IsValidUserPass(*l.Username, []byte(*l.Password))
 }
 
 func authFailure(r *protos.LoginReply) {
@@ -58,27 +58,58 @@ func authSuccess(r *protos.LoginReply) {
 	r.SessionID = &sid
 }
 
-func sendReply(r *protos.LoginReply, s *transport.ServerSocket) {
+func SendLoginReply(r *protos.LoginReply, s *transport.ServerSocket) error {
 	b, err := proto.Marshal(r)
 
 	if err != nil {
-		log.Fatal("could not serialize reply")
+		return errors.New("could not serialize login reply")
 	}
 
-	s.Send(b)
+	return s.Send(b)
 }
 
-func ServiceRequests(s *transport.ServerSocket) {
+func SendLoginRequest(r *protos.Login, s *transport.ClientSocket) error {
+	b, err := proto.Marshal(r)
+
+	if err != nil {
+		return errors.New("could not serialize login request")
+	}
+
+	return s.Send(b)
+}
+
+func ServiceLoginReply(s *transport.ClientSocket) (bool, error) {
+	b, err := s.Receive()
+
+	if err != nil {
+		return false, errors.New("could not receive login reply")
+	}
+
+	rep := CreateLoginReply()
+	err = proto.Unmarshal(b, rep)
+
+	if err != nil {
+		return false, errors.New("could not deserialize login reply")
+	}
+
+	success := false
+	if *rep.Authorized == protos.LoginReply_SUCCESSFUL {
+		success = true
+	}
+	return success, nil
+}
+
+func ServiceLoginRequests(s *transport.ServerSocket) error {
 	for {
 		b, err := s.Receive()
 
 		if err != nil {
-			log.Fatal("could not parse incoming request")
+			return errors.New("could not receive login request")
 		}
 
-		l, err := parseRequest(b)
+		l, err := parseLoginRequest(b)
 
-		r := CreateReply()
+		r := CreateLoginReply()
 		if err != nil {
 			authFailure(r)
 		} else {
@@ -90,6 +121,8 @@ func ServiceRequests(s *transport.ServerSocket) {
 			}
 		}
 
-		sendReply(r, s)
+		if err := SendLoginReply(r, s); err != nil {
+			return errors.New("Could not send login reply")
+		}
 	}
 }

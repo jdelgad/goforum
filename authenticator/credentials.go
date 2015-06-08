@@ -3,7 +3,6 @@ package authenticator
 import (
 	"encoding/csv"
 	"errors"
-	"fmt"
 	"os"
 )
 
@@ -29,7 +28,7 @@ func isFile(path string) bool {
 	return false
 }
 
-func GetUserPasswordList(file string) (map[string]User, error) {
+func getUserPasswordList(file string) (map[string]User, error) {
 	if !isFile(file) {
 		return nil, errors.New("password file does not exist")
 	}
@@ -70,22 +69,38 @@ func GetUserPasswordList(file string) (map[string]User, error) {
 	return userPass, nil
 }
 
-func IsRegisteredUser(u string, users map[string]User) bool {
+func IsRegisteredUser(u string) bool {
+	users, err := getUserPasswordList("passwd")
+
+	if err != nil {
+		return false
+	}
+
 	_, ok := users[u]
 
 	return ok
 }
 
-func IsPasswordValid(u string, p string, users map[string]User) bool {
-	user, ok := users[u]
-	if !ok {
-		return false
-	}
-
-	return p == user.Password
+func IsValidUserPass(u string, p []byte) bool {
+	return IsRegisteredUser(u) && string(p) == getPassword(u)
 }
 
-func openSession(name, pass string, users map[string]User) (Session, error) {
+func getPassword(u string) string {
+	users, err := getUserPasswordList("passwd")
+
+	if err != nil {
+		return ""
+	}
+
+	user, ok := users[u]
+	if !ok {
+		return ""
+	}
+
+	return user.Password
+}
+
+func OpenSession(name, pass string, users map[string]User) (Session, error) {
 	user, ok := users[name]
 	if !ok {
 		return Session{}, errors.New("user does not exist")
@@ -101,7 +116,7 @@ func openSession(name, pass string, users map[string]User) (Session, error) {
 	return session, nil
 }
 
-func isRegularUser(name string, users map[string]User) (bool, error) {
+func IsRegularUser(name string, users map[string]User) (bool, error) {
 	user, ok := users[name]
 
 	if !ok {
@@ -111,7 +126,7 @@ func isRegularUser(name string, users map[string]User) (bool, error) {
 	return user.Role == "Regular", nil
 }
 
-func isAdminUser(name string, users map[string]User) (bool, error) {
+func IsAdminUser(name string, users map[string]User) (bool, error) {
 	user, ok := users[name]
 
 	if !ok {
@@ -121,36 +136,13 @@ func isAdminUser(name string, users map[string]User) (bool, error) {
 	return user.Role == "Admin", nil
 }
 
-func LoggedInPrompt() int32 {
-	var c int32
-	fmt.Println("Menu")
-	fmt.Println("===========")
-	fmt.Println("1. Logout")
-	fmt.Scanf("%d", &c)
-	return c
-}
-
-func isLoggedIn(name string, session Session) bool {
+func IsLoggedIn(name string, session Session) bool {
 	return session.user.Username == name && session.active
 }
 
-func mainPrompt() int32 {
-	var c int32
-	fmt.Println("Menu")
-	fmt.Println("===========")
-	fmt.Println("1. Sign in")
-	fmt.Println("2. Create a new account")
-	fmt.Println("3. Quit")
-	fmt.Scanf("%d", &c)
-	return c
-}
+func IsValidNewUsername(name string) (bool, error) {
+	users, err := getUserPasswordList("passwd")
 
-func initialChoice(choice int32) {
-	LoggedInPrompt()
-}
-
-func isValidUsername(name string) (bool, error) {
-	users, err := GetUserPasswordList("passwd")
 	if err != nil {
 		return false, errors.New("could not get list of registered users")
 	}
@@ -164,8 +156,8 @@ func isValidUsername(name string) (bool, error) {
 	return true, nil
 }
 
-func registerUser(name, password string) error {
-	users, err := GetUserPasswordList("passwd")
+func RegisterUser(name, password string) error {
+	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		return errors.New("could not read user list")
 	}
@@ -211,8 +203,8 @@ func updateUserList(users map[string]User) error {
 	return nil
 }
 
-func deleteUser(user string) error {
-	users, err := GetUserPasswordList("passwd")
+func DeleteUser(user string) error {
+	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
 		return errors.New("could not open user list")
