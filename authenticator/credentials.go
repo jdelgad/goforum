@@ -69,35 +69,47 @@ func getUserPasswordList(file string) (map[string]User, error) {
 	return userPass, nil
 }
 
-func IsRegisteredUser(u string) bool {
+func IsRegisteredUser(u string) (bool, error) {
 	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
-		return false
+		return false, errors.New("could not read user password list")
 	}
 
 	_, ok := users[u]
 
-	return ok
+	return ok, nil
 }
 
-func IsValidUserPass(u string, p []byte) bool {
-	return IsRegisteredUser(u) && string(p) == getPassword(u)
+func IsValidUserPass(u string, p []byte) (bool, error) {
+	r, err := IsRegisteredUser(u)
+
+	if err != nil {
+		return false, errors.New("user is not registered")
+	}
+
+	pass, err := getPassword(u)
+
+	if err != nil {
+		return false, errors.New("password does not exist")
+	}
+
+	return r && string(p) == pass, nil
 }
 
-func getPassword(u string) string {
+func getPassword(u string) (string, error) {
 	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
-		return ""
+		return "", errors.New("could not retrieve user password")
 	}
 
 	user, ok := users[u]
 	if !ok {
-		return ""
+		return "", errors.New("user does not exist")
 	}
 
-	return user.Password
+	return user.Password, nil
 }
 
 func OpenSession(name, pass string, users map[string]User) (Session, error) {

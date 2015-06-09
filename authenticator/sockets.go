@@ -40,8 +40,8 @@ func parseLoginRequest(b []byte) (*protos.Login, error) {
 	return login, nil
 }
 
-func isValidLogin(l protos.Login) bool {
-	return IsRegisteredUser(*l.Username) && IsValidUserPass(*l.Username, []byte(*l.Password))
+func isValidLogin(l protos.Login) (bool, error) {
+	return IsValidUserPass(*l.Username, []byte(*l.Password))
 }
 
 func authFailure(r *protos.LoginReply) {
@@ -114,7 +114,13 @@ func ServiceLoginRequests(s *transport.ServerSocket) error {
 			authFailure(r)
 		} else {
 
-			if isValidLogin(*l) {
+			v, err := isValidLogin(*l)
+
+			if err != nil {
+				return errors.New("cannot determine if username/pass is valid")
+			}
+
+			if v {
 				authSuccess(r)
 			} else {
 				authFailure(r)
