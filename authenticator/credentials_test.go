@@ -136,6 +136,10 @@ func TestAdminUser(t *testing.T) {
 	v, err = IsAdminUser("newUser", users)
 	assert.False(t, v)
 	assert.NoError(t, err)
+
+	v, err = IsAdminUser("badUser", users)
+	assert.False(t, v)
+	assert.Error(t, err)
 }
 
 func TestIsLoggedIn(t *testing.T) {
@@ -155,6 +159,15 @@ func TestIsLoggedIn(t *testing.T) {
 	v = IsLoggedIn("jdelgad", session)
 	assert.False(t, v)
 	assert.NoError(t, err)
+}
+
+func TestCloseSessionOnBadPassword(t *testing.T) {
+	users, err := getUserPasswordList("passwd")
+	assert.NoError(t, err)
+	s, err := OpenSession("jdelgad", "badpass", users)
+	assert.NoError(t, err)
+	v := IsLoggedIn("jdelgad", s)
+	assert.False(t, v)
 }
 
 func TestCreateUser(t *testing.T) {
