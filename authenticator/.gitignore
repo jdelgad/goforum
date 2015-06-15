@@ -1,2 +1,4 @@
 cli
 authenticator
+salt
+generate_salt

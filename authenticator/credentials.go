@@ -234,3 +234,7 @@ func DeleteUser(user string) error {
 
 	return err
 }
+
+func generatePassword(p []byte) {
+	//h, err := scrypt.Key(p, salt, 1<<14, 8, 1)
+}
