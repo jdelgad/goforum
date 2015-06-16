@@ -41,7 +41,7 @@ func parseLoginRequest(b []byte) (*protos.Login, error) {
 }
 
 func isValidLogin(l protos.Login) (bool, error) {
-	return IsValidUserPass(*l.Username, []byte(*l.Password))
+	return IsValidUserPass(*l.Username, l.Password)
 }
 
 func authFailure(r *protos.LoginReply) {

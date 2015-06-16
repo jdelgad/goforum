@@ -14,8 +14,8 @@ It has these top-level messages:
 */
 package protos
 
-import "github.com/golang/protobuf/proto"
-import "math"
+import proto "github.com/golang/protobuf/proto"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -23,7 +23,7 @@ var _ = math.Inf
 
 type Login struct {
 	Username         *string `protobuf:"bytes,1,opt,name=username" json:"username,omitempty"`
-	Password         *string `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
+	Password         []byte  `protobuf:"bytes,2,opt,name=password" json:"password,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -38,11 +38,11 @@ func (m *Login) GetUsername() string {
 	return ""
 }
 
-func (m *Login) GetPassword() string {
-	if m != nil && m.Password != nil {
-		return *m.Password
+func (m *Login) GetPassword() []byte {
+	if m != nil {
+		return m.Password
 	}
-	return ""
+	return nil
 }
 
 func init() {

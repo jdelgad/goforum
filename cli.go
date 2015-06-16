@@ -54,8 +54,8 @@ func main() {
 			fmt.Println("Could not encrypt password. Try again...")
 			continue
 		}
-		pass := string(pw)
-		req.Password = &pass
+
+		req.Password = pw
 
 		authenticator.SendLoginRequest(req, s)
 
