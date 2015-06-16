@@ -3,6 +3,8 @@ package authenticator
 import (
 	"encoding/csv"
 	"errors"
+	"golang.org/x/crypto/scrypt"
+	"io/ioutil"
 	"os"
 )
 
@@ -94,7 +96,25 @@ func IsValidUserPass(u string, p []byte) (bool, error) {
 		return false, errors.New("password does not exist")
 	}
 
-	return r && string(p) == pass, nil
+	enc_pass, err := encryptPassword(p)
+	if err != nil {
+		return false, errors.New("password could not be encrypted")
+	}
+
+	return r && string(enc_pass) == pass, nil
+}
+
+func encryptPassword(p []byte) ([]byte, error) {
+	s, err := getSalt("salt")
+	if err != nil {
+		return nil, errors.New("could not read salt file")
+	}
+
+	return scrypt.Key(p, s, 16384, 8, 1, 32)
+}
+
+func getSalt(f string) ([]byte, error) {
+	return ioutil.ReadFile(f)
 }
 
 func getPassword(u string) (string, error) {
@@ -233,8 +253,4 @@ func DeleteUser(user string) error {
 	err = updateUserList(users)
 
 	return err
-}
-
-func generatePassword(p []byte) {
-	//h, err := scrypt.Key(p, salt, 1<<14, 8, 1)
 }
