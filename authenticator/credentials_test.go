@@ -91,7 +91,7 @@ func TestOpenPasswordFile(t *testing.T) {
 	v, ok := users["jdelgad"]
 	assert.NotNil(t, ok)
 	assert.Equal(t, v.Username, "jdelgad")
-	assert.Equal(t, v.Password, "pass")
+	assert.Equal(t, v.Password, []byte("pass"))
 	assert.Equal(t, v.Role, "Admin")
 }
 
@@ -104,7 +104,7 @@ func TestAuthenticate(t *testing.T) {
 		assert.Nil(t, ok)
 	}
 
-	_, ok := OpenSession("foo", "bar", users)
+	_, ok := OpenSession("foo", []byte("bar"), users)
 	assert.NotNil(t, ok)
 }
 
@@ -146,12 +146,12 @@ func TestIsLoggedIn(t *testing.T) {
 	users, err := getUserPasswordList("passwd")
 	assert.NoError(t, err)
 
-	session, err := OpenSession("jdelgad", "pass", users)
+	session, err := OpenSession("jdelgad", []byte("pass"), users)
 	v := IsLoggedIn("jdelgad", session)
 	assert.True(t, v)
 	assert.NoError(t, err)
 
-	session, err = OpenSession("newUser", "pass2", users)
+	session, err = OpenSession("newUser", []byte("pass2"), users)
 	v = IsLoggedIn("newUser", session)
 	assert.True(t, v)
 	assert.NoError(t, err)
@@ -164,7 +164,7 @@ func TestIsLoggedIn(t *testing.T) {
 func TestCloseSessionOnBadPassword(t *testing.T) {
 	users, err := getUserPasswordList("passwd")
 	assert.NoError(t, err)
-	s, err := OpenSession("jdelgad", "badpass", users)
+	s, err := OpenSession("jdelgad", []byte("badpass"), users)
 	assert.NoError(t, err)
 	v := IsLoggedIn("jdelgad", s)
 	assert.False(t, v)
@@ -181,7 +181,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestRegisterUser(t *testing.T) {
-	RegisterUser("newestUser", "password")
+	RegisterUser("newestUser", []byte("password"))
 
 	v, err := IsRegisteredUser("newestUser")
 
@@ -190,19 +190,21 @@ func TestRegisterUser(t *testing.T) {
 }
 
 func TestDeleteUser(t *testing.T) {
-	RegisterUser("newestUser", "pass3")
+	RegisterUser("newestUser", []byte("pass3"))
 	err := DeleteUser("newestUser")
 
 	assert.NoError(t, err)
 
 	users, err := getUserPasswordList("passwd")
-	_, ok := users["newestUser"]
+	assert.NotNil(t, users)
+	assert.NoError(t, err)
 
+	_, ok := users["newestUser"]
 	assert.False(t, ok)
 }
 
 func TestEncryptPassword(t *testing.T) {
-	p, err := encryptPassword([]byte("testing"))
+	p, err := EncryptPassword([]byte("testing"))
 	assert.NoError(t, err)
 	assert.NotNil(t, p)
 }

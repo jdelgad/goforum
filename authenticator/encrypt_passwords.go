@@ -18,6 +18,6 @@ func main() {
 		panic("Could not obtain password")
 	}
 
-	pp, err := authenticator.encryptPassword(p)
+	pp, err := authenticator.EncryptPassword(p)
 	fmt.Println(pp)
 }

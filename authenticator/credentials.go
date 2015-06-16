@@ -6,12 +6,13 @@ import (
 	"golang.org/x/crypto/scrypt"
 	"io/ioutil"
 	"os"
+	"bytes"
 )
 
 type User struct {
 	Username string
 	Role     string
-	Password string
+	Password []byte
 }
 
 type Session struct {
@@ -64,7 +65,10 @@ func getUserPasswordList(file string) (map[string]User, error) {
 			continue
 		}
 
-		userInfo := User{Username: username, Password: password, Role: role}
+		userInfo := User{
+			Username: username,
+			Password: []byte(password),
+			Role: role}
 		userPass[username] = userInfo
 	}
 
@@ -96,15 +100,15 @@ func IsValidUserPass(u string, p []byte) (bool, error) {
 		return false, errors.New("password does not exist")
 	}
 
-	enc_pass, err := encryptPassword(p)
+	enc_pass, err := EncryptPassword(p)
 	if err != nil {
 		return false, errors.New("password could not be encrypted")
 	}
 
-	return r && string(enc_pass) == pass, nil
+	return r && bytes.Equal(enc_pass, pass), nil
 }
 
-func encryptPassword(p []byte) ([]byte, error) {
+func EncryptPassword(p []byte) ([]byte, error) {
 	s, err := getSalt("salt")
 	if err != nil {
 		return nil, errors.New("could not read salt file")
@@ -117,29 +121,29 @@ func getSalt(f string) ([]byte, error) {
 	return ioutil.ReadFile(f)
 }
 
-func getPassword(u string) (string, error) {
+func getPassword(u string) ([]byte, error) {
 	users, err := getUserPasswordList("passwd")
 
 	if err != nil {
-		return "", errors.New("could not retrieve user password")
+		return nil, errors.New("could not retrieve user password")
 	}
 
 	user, ok := users[u]
 	if !ok {
-		return "", errors.New("user does not exist")
+		return nil, errors.New("user does not exist")
 	}
 
 	return user.Password, nil
 }
 
-func OpenSession(name, pass string, users map[string]User) (Session, error) {
+func OpenSession(name string, pass []byte, users map[string]User) (Session, error) {
 	user, ok := users[name]
 	if !ok {
 		return Session{}, errors.New("user does not exist")
 	}
 
 	var session Session
-	if users[name].Password == pass {
+	if bytes.Equal(users[name].Password, pass) {
 		session = Session{user: user, active: true}
 	} else {
 		session = Session{user: user, active: false}
@@ -188,13 +192,22 @@ func IsValidNewUsername(name string) (bool, error) {
 	return true, nil
 }
 
-func RegisterUser(name, password string) error {
+func RegisterUser(name string, pw []byte) error {
 	users, err := getUserPasswordList("passwd")
 	if err != nil {
 		return errors.New("could not read user list")
 	}
 
-	user := User{Username: name, Password: password, Role: "Regular"}
+	enc_pass, err := EncryptPassword(pw)
+	if err != nil {
+		return errors.New("could not encrypt user password")
+	}
+
+	user := User{
+		Username: name,
+		Password: enc_pass,
+		Role:     "Regular"}
+
 	users[name] = user
 
 	err = updateUserList(users)
@@ -221,7 +234,7 @@ func updateUserList(users map[string]User) error {
 	for _, info := range users {
 		record := make([]string, 0)
 		record = append(record, info.Username)
-		record = append(record, info.Password)
+		record = append(record, string(info.Password))
 		record = append(record, info.Role)
 		records = append(records, record)
 	}

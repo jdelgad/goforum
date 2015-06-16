@@ -48,8 +48,14 @@ func main() {
 
 		req := authenticator.CreateLoginRequest()
 		req.Username = &u
-		pw := string(p)
-		req.Password = &pw
+		pw, err := authenticator.EncryptPassword(p)
+
+		if err != nil {
+			fmt.Println("Could not encrypt password. Try again...")
+			continue
+		}
+		pass := string(pw)
+		req.Password = &pass
 
 		authenticator.SendLoginRequest(req, s)
 
