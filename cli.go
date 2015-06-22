@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/jdelgad/goforum/authenticator"
+	"github.com/jdelgad/stpeter/auth"
 	"golang.org/x/crypto/ssh/terminal"
 	"log"
 )
@@ -29,7 +29,7 @@ func loggedInPrompt() int32 {
 
 func main() {
 
-	s := authenticator.SetupClientSocket("tcp://127.0.0.1:13000")
+	s := auth.SetupClientSocket("tcp://127.0.0.1:13000")
 	defer s.Close()
 	verified := false
 
@@ -46,9 +46,9 @@ func main() {
 			panic("Could not obtain password")
 		}
 
-		req := authenticator.CreateLoginRequest()
+		req := auth.CreateLoginRequest()
 		req.Username = &u
-		pw, err := authenticator.EncryptPassword(p)
+		pw, err := auth.EncryptPassword(p, "salt")
 
 		if err != nil {
 			fmt.Println("Could not encrypt password. Try again...")
@@ -57,9 +57,9 @@ func main() {
 
 		req.Password = pw
 
-		authenticator.SendLoginRequest(req, s)
+		auth.SendLoginRequest(req, s)
 
-		verified, err = authenticator.ServiceLoginReply(s)
+		verified, err = auth.ServiceLoginReply(s)
 
 		if err != nil {
 			log.Fatal("Could not determine login status")
