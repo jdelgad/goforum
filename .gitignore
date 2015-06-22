@@ -1,6 +1,8 @@
 goforum
 coverage.out
 cli
+server
+webfrontend/server
 # Created by https://www.gitignore.io
 
 ### Linux ###
