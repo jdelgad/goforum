@@ -1,5 +1,3 @@
-// +build server
-
 package main
 
 import (
